@@ -34,6 +34,7 @@
 #include "Network.h"
 #include "NNCache.h"
 #include "Random.h"
+#include "TCPServer.h"
 #include "ThreadPool.h"
 #include "Utils.h"
 #include "Zobrist.h"
@@ -56,6 +57,9 @@ static void parse_commandline(int argc, char *argv[]) {
     gen_desc.add_options()
         ("help,h", "Show commandline options.")
         ("gtp,g", "Enable GTP mode.")
+        ("ngtp,N", "Enable GTP mode over network.")
+        ("port,P", po::value<ushort>()->default_value(cfg_ngtp_port),
+                   "Port for GTP over network.")
         ("threads,t", po::value<int>()->default_value(cfg_num_threads),
                       "Number of threads to use.")
         ("playouts,p", po::value<int>(),
@@ -194,6 +198,15 @@ static void parse_commandline(int argc, char *argv[]) {
 
     if (vm.count("gtp")) {
         cfg_gtp_mode = true;
+    }
+
+    if (vm.count("ngtp")) {
+        cfg_gtp_mode = true;
+        cfg_ngtp_mode = true;
+    }
+
+    if (vm.count("port")) {
+        cfg_ngtp_port = vm["port"].as<ushort>();
     }
 
     if (!vm["threads"].defaulted()) {
@@ -406,13 +419,33 @@ int main(int argc, char *argv[]) {
             std::cout << "Leela: ";
         }
 
-        if (std::getline(std::cin, input)) {
-            Utils::log_input(input);
-            GTP::execute(*maingame, input);
-        } else {
-            // eof or other error
-            std::cout << std::endl;
-            break;
+        if (cfg_ngtp_mode) {
+            auto connection = TCPServer::get_instance().get_active_connection();
+            if (!connection || !connection->stream.socket().is_open()) {
+                printf("Waiting for connection\n");
+                connection = TCPServer::get_instance().accept_connection();
+                printf("Client connected\n");
+            }
+            if (std::getline(connection->stream, input)) {
+                Utils::log_input(input);
+                GTP::execute(*maingame, input);
+            } else {
+                // eof or other error
+                std::cout << std::endl;
+                break;
+            }
+        }
+        else {
+
+            if (std::getline(std::cin, input)) {
+                Utils::log_input(input);
+                GTP::execute(*maingame, input);
+            } else {
+                // eof or other error
+                std::cout << std::endl;
+                break;
+            }
+
         }
 
         // Force a flush of the logfile

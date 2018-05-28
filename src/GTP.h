@@ -29,6 +29,8 @@
 #include "UCTSearch.h"
 
 extern bool cfg_gtp_mode;
+extern bool cfg_ngtp_mode;
+extern ushort cfg_ngtp_port;
 extern bool cfg_allow_pondering;
 extern int cfg_num_threads;
 extern int cfg_max_threads;

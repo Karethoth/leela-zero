@@ -18,6 +18,8 @@
 
 #include "config.h"
 #include "Utils.h"
+#include "TCPServer.h"
+
 
 #include <mutex>
 #include <cstdarg>
@@ -101,13 +103,30 @@ static void gtp_fprintf(FILE* file, const std::string& prefix,
     fprintf(file, "\n\n");
 }
 
+static void gtp_network_printf(std::string prefix, const char *fmt, va_list ap) {
+    char buffer[1024];
+    snprintf(buffer, 1024, fmt, ap);
+    auto connection = TCPServer::get_instance().get_active_connection();
+    if (connection && connection->stream.socket().is_open()) {
+        printf("Writing to stream: %s%s\n", prefix.c_str(), buffer);
+        connection->stream << prefix;
+        connection->stream << buffer;
+        connection->stream << "\n\n";
+    }
+}
+
 static void gtp_base_printf(int id, std::string prefix,
                             const char *fmt, va_list ap) {
     if (id != -1) {
         prefix += std::to_string(id);
     }
 
-    gtp_fprintf(stdout, prefix, fmt, ap);
+    if (cfg_ngtp_mode) {
+        gtp_network_printf(prefix, fmt, ap);
+    }
+    else {
+        gtp_fprintf(stdout, prefix, fmt, ap);
+    }
 
     if (cfg_logfile_handle) {
         std::lock_guard<std::mutex> lock(IOmutex);

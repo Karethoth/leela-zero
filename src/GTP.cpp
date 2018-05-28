@@ -46,6 +46,8 @@ using namespace Utils;
 
 // Configuration flags
 bool cfg_gtp_mode;
+bool cfg_ngtp_mode;
+ushort cfg_ngtp_port;
 bool cfg_allow_pondering;
 int cfg_num_threads;
 int cfg_max_threads;
@@ -77,6 +79,8 @@ bool cfg_benchmark;
 
 void GTP::setup_default_parameters() {
     cfg_gtp_mode = false;
+    cfg_ngtp_mode = false;
+    cfg_ngtp_port = 2123;
     cfg_allow_pondering = true;
     cfg_max_threads = std::max(1, std::min(SMP::get_num_cpus(), MAX_CPUS));
 #ifdef USE_OPENCL
