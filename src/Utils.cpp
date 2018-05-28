@@ -35,7 +35,27 @@
 
 Utils::ThreadPool thread_pool;
 
+void Utils::bump_connection_expiration(const unsigned int seconds) {
+    if (cfg_ngtp_mode) {
+        auto connection = TCPServer::get_instance().get_active_connection();
+        if (connection && connection->stream.socket().is_open()) {
+            connection->stream.expires_after(std::chrono::seconds(seconds));
+        }
+    }
+}
+
 bool Utils::input_pending(void) {
+
+    if (cfg_ngtp_mode) {
+        auto connection = TCPServer::get_instance().get_active_connection();
+        if (connection && connection->stream.socket().is_open()) {
+            return connection->stream.socket().available() > 0;
+        }
+        else if (connection) {
+            return true;
+        }
+    }
+
 #ifdef HAVE_SELECT
     fd_set read_fds;
     FD_ZERO(&read_fds);
@@ -83,7 +103,21 @@ void Utils::myprintf(const char *fmt, ...) {
     if (cfg_quiet) {
         return;
     }
+
+    char buffer[1024];
+
     va_list ap;
+    if (cfg_ngtp_mode) {
+        auto connection = TCPServer::get_instance().get_active_connection();
+        if (connection && connection->stream.socket().is_open()) {
+            va_start(ap, fmt);
+            vsnprintf(buffer, 1024, fmt, ap);
+            va_end(ap);
+            connection->stream << (const char*)buffer;
+            Utils::bump_connection_expiration(cfg_ngtp_timeout);
+        }
+    }
+
     va_start(ap, fmt);
     vfprintf(stderr, fmt, ap);
     va_end(ap);
@@ -105,13 +139,14 @@ static void gtp_fprintf(FILE* file, const std::string& prefix,
 
 static void gtp_network_printf(std::string prefix, const char *fmt, va_list ap) {
     char buffer[1024];
-    snprintf(buffer, 1024, fmt, ap);
+    vsnprintf(buffer, 1024, fmt, ap);
     auto connection = TCPServer::get_instance().get_active_connection();
     if (connection && connection->stream.socket().is_open()) {
-        printf("Writing to stream: %s%s\n", prefix.c_str(), buffer);
+        printf("%s%s\n", prefix.c_str(), buffer);
         connection->stream << prefix;
         connection->stream << buffer;
         connection->stream << "\n\n";
+        Utils::bump_connection_expiration(cfg_ngtp_timeout);
     }
 }
 

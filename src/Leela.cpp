@@ -57,9 +57,6 @@ static void parse_commandline(int argc, char *argv[]) {
     gen_desc.add_options()
         ("help,h", "Show commandline options.")
         ("gtp,g", "Enable GTP mode.")
-        ("ngtp,N", "Enable GTP mode over network.")
-        ("port,P", po::value<ushort>()->default_value(cfg_ngtp_port),
-                   "Port for GTP over network.")
         ("threads,t", po::value<int>()->default_value(cfg_num_threads),
                       "Number of threads to use.")
         ("playouts,p", po::value<int>(),
@@ -106,6 +103,14 @@ static void parse_commandline(int argc, char *argv[]) {
             po::value<float>()->default_value(cfg_random_temp),
             "Temperature to use for random move selection.")
         ;
+    po::options_description net_desc("Networking options");
+    net_desc.add_options()
+        ("ngtp,N", "Enable GTP mode over network.")
+        ("port,P", po::value<ushort>()->default_value(cfg_ngtp_port),
+                   "Port for GTP over network.")
+        ("timeout,T", po::value<unsigned int>()->default_value(cfg_ngtp_timeout),
+                   "Time in seconds to disconnect an inactive client.")
+        ;
 #ifdef USE_TUNER
     po::options_description tuner_desc("Tuning options");
     tuner_desc.add_options()
@@ -125,6 +130,7 @@ static void parse_commandline(int argc, char *argv[]) {
        .add(gpu_desc)
 #endif
        .add(selfplay_desc)
+       .add(net_desc);
 #ifdef USE_TUNER
        .add(tuner_desc);
 #else
@@ -426,13 +432,21 @@ int main(int argc, char *argv[]) {
                 connection = TCPServer::get_instance().accept_connection();
                 printf("Client connected\n");
             }
-            if (std::getline(connection->stream, input)) {
-                Utils::log_input(input);
-                GTP::execute(*maingame, input);
-            } else {
-                // eof or other error
-                std::cout << std::endl;
-                break;
+
+            try {
+                if (std::getline(connection->stream, input)) {
+                    Utils::bump_connection_expiration(cfg_ngtp_timeout);
+                    printf("Received command: %s\n", input.c_str());
+                    Utils::log_input(input);
+                    GTP::execute(*maingame, input);
+                } else {
+                    connection->stream.socket().close();
+                    printf("Client disconnected\n");
+                    continue;
+                }
+            } catch(std::exception &e) {
+                printf("Encountered exception: %s\n", e.what());
+                continue;
             }
         }
         else {

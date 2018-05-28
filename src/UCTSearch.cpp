@@ -694,6 +694,10 @@ void UCTSearch::ponder() {
     // Copy the root state. Use to check for tree re-use in future calls.
     m_last_rootstate = std::make_unique<GameState>(m_rootstate);
 }
+void UCTSearch::stop_pondering() {
+    m_run = false;
+}
+
 
 void UCTSearch::set_playout_limit(int playouts) {
     static_assert(std::is_convertible<decltype(playouts),

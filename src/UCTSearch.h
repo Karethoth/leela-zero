@@ -96,6 +96,7 @@ public:
     void set_playout_limit(int playouts);
     void set_visit_limit(int visits);
     void ponder();
+    void stop_pondering();
     bool is_running() const;
     void increment_playouts();
     SearchResult play_simulation(GameState& currstate, UCTNode* const node);

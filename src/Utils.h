@@ -35,6 +35,7 @@ namespace Utils {
     void gtp_fail_printf(int id, const char *fmt, ...);
     void log_input(const std::string& input);
     bool input_pending();
+    void bump_connection_expiration(const unsigned int seconds);
 
     template<class T>
     void atomic_add(std::atomic<T> &f, T d) {

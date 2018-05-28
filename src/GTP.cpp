@@ -46,8 +46,6 @@ using namespace Utils;
 
 // Configuration flags
 bool cfg_gtp_mode;
-bool cfg_ngtp_mode;
-ushort cfg_ngtp_port;
 bool cfg_allow_pondering;
 int cfg_num_threads;
 int cfg_max_threads;
@@ -76,11 +74,12 @@ FILE* cfg_logfile_handle;
 bool cfg_quiet;
 std::string cfg_options_str;
 bool cfg_benchmark;
+bool cfg_ngtp_mode;
+ushort cfg_ngtp_port;
+unsigned int cfg_ngtp_timeout;
 
 void GTP::setup_default_parameters() {
     cfg_gtp_mode = false;
-    cfg_ngtp_mode = false;
-    cfg_ngtp_port = 2123;
     cfg_allow_pondering = true;
     cfg_max_threads = std::max(1, std::min(SMP::get_num_cpus(), MAX_CPUS));
 #ifdef USE_OPENCL
@@ -111,6 +110,10 @@ void GTP::setup_default_parameters() {
     cfg_logfile_handle = nullptr;
     cfg_quiet = false;
     cfg_benchmark = false;
+    // GTP over network
+    cfg_ngtp_mode = false;
+    cfg_ngtp_port = 2123;
+    cfg_ngtp_timeout = 60;
 
     // C++11 doesn't guarantee *anything* about how random this is,
     // and in MinGW it isn't random at all. But we can mix it in, which
@@ -151,6 +154,8 @@ const std::string GTP::s_commands[] = {
     "kgs-time_settings",
     "kgs-game_over",
     "heatmap",
+    "ponder",
+    "noponder",
     ""
 };
 
@@ -813,6 +818,17 @@ bool GTP::execute(GameState & game, std::string xinput) {
         } else {
             gtp_fail_printf(id, "syntax not understood");
         }
+
+        return true;
+    } else if (command.find("ponder") == 0) {
+        myprintf("Will ponder\n");
+        cfg_allow_pondering = true;
+
+        return true;
+    } else if (command.find("noponder") == 0) {
+        myprintf("Won't ponder\n");
+        cfg_allow_pondering = false;
+        search->stop_pondering();
 
         return true;
     }

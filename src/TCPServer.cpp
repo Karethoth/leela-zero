@@ -20,7 +20,7 @@
 #include "config.h"
 
 ClientConnection::ClientConnection(tcp::socket &&_socket) : stream{std::move(_socket)} {
-    stream.expires_after(std::chrono::seconds(15*60));
+    stream.expires_after(std::chrono::seconds(1*60));
 }
 
 
