@@ -20,10 +20,12 @@
 #include "config.h"
 
 ClientConnection::ClientConnection(tcp::socket &&_socket) : stream{std::move(_socket)} {
-    stream.expires_after(std::chrono::seconds(1*60));
+    stream.expires_after(std::chrono::seconds(cfg_ngtp_timeout));
 }
 
-
+TCPServer::TCPServer(const ushort port) :
+    m_io_service{},
+    m_acceptor(m_io_service, tcp::endpoint(tcp::v4(), port)) {}
 
 std::shared_ptr<ClientConnection> TCPServer::accept_connection() {
     auto connection = std::make_shared<ClientConnection>( m_acceptor.accept() );
@@ -34,8 +36,3 @@ std::shared_ptr<ClientConnection> TCPServer::accept_connection() {
 std::shared_ptr<ClientConnection> TCPServer::get_active_connection() const {
     return m_active_connection;
 }
-
-
-TCPServer::TCPServer(const ushort port) :
-    m_io_service{},
-    m_acceptor(m_io_service, tcp::endpoint(tcp::v4(), port)) {}
