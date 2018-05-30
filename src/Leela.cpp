@@ -106,7 +106,7 @@ static void parse_commandline(int argc, char *argv[]) {
     po::options_description net_desc("Networking options");
     net_desc.add_options()
         ("ngtp,N", "Enable GTP mode over network.")
-        ("port,P", po::value<ushort>()->default_value(cfg_ngtp_port),
+        ("port,P", po::value<unsigned short>()->default_value(cfg_ngtp_port),
                    "Port for GTP over network.")
         ("timeout,T", po::value<unsigned int>()->default_value(cfg_ngtp_timeout),
                    "Time in seconds to disconnect an inactive client.")
@@ -212,7 +212,7 @@ static void parse_commandline(int argc, char *argv[]) {
     }
 
     if (vm.count("port")) {
-        cfg_ngtp_port = vm["port"].as<ushort>();
+        cfg_ngtp_port = vm["port"].as<unsigned short>();
     }
 
     if (!vm["threads"].defaulted()) {
@@ -427,7 +427,7 @@ int main(int argc, char *argv[]) {
 
         if (cfg_ngtp_mode) {
             auto connection = TCPServer::get_instance().get_active_connection();
-            if (!connection || !connection->stream.socket().is_open()) {
+            if (!connection || !connection->stream.rdbuf()->is_open()) {
                 printf("Waiting for connection\n");
                 connection = TCPServer::get_instance().accept_connection();
                 printf("Client connected\n");
@@ -440,7 +440,7 @@ int main(int argc, char *argv[]) {
                     Utils::log_input(input);
                     GTP::execute(*maingame, input);
                 } else {
-                    connection->stream.socket().close();
+                    connection->stream.rdbuf()->close();
                     printf("Client disconnected\n");
                     continue;
                 }

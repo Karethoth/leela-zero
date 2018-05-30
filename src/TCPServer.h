@@ -18,7 +18,6 @@
 
 #ifndef TCP_SERVER_H_INCLUDED
 #define TCP_SERVER_H_INCLUDED
-
 #include <memory>
 #include <chrono>
 #include <cstdio>
@@ -34,8 +33,6 @@ using boost::asio::ip::tcp;
 
 struct ClientConnection {
     tcp::iostream stream;
-
-    ClientConnection(tcp::socket &&_socket);
 };
 
 class TCPServer {
@@ -49,7 +46,7 @@ public:
     std::shared_ptr<ClientConnection> get_active_connection() const;
 
 private:
-    TCPServer(const ushort port);
+    TCPServer(const unsigned short port);
 
     boost::asio::io_service m_io_service;
     tcp::acceptor m_acceptor;

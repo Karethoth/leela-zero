@@ -75,7 +75,7 @@ bool cfg_quiet;
 std::string cfg_options_str;
 bool cfg_benchmark;
 bool cfg_ngtp_mode;
-ushort cfg_ngtp_port;
+unsigned short cfg_ngtp_port;
 unsigned int cfg_ngtp_timeout;
 
 void GTP::setup_default_parameters() {

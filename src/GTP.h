@@ -58,7 +58,7 @@ extern bool cfg_quiet;
 extern std::string cfg_options_str;
 extern bool cfg_benchmark;
 extern bool cfg_ngtp_mode;
-extern ushort cfg_ngtp_port;
+extern unsigned short cfg_ngtp_port;
 extern unsigned int cfg_ngtp_timeout;
 
 /*

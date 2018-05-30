@@ -24,6 +24,7 @@
 #include <mutex>
 #include <cstdarg>
 #include <cstdio>
+#include <boost/asio.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -38,8 +39,8 @@ Utils::ThreadPool thread_pool;
 void Utils::bump_connection_expiration(const unsigned int seconds) {
     if (cfg_ngtp_mode) {
         auto connection = TCPServer::get_instance().get_active_connection();
-        if (connection && connection->stream.socket().is_open()) {
-            connection->stream.expires_after(std::chrono::seconds(seconds));
+        if (connection && connection->stream.rdbuf()->is_open()) {
+            connection->stream.rdbuf()->expires_from_now(boost::posix_time::seconds(seconds));
         }
     }
 }
@@ -48,8 +49,8 @@ bool Utils::input_pending(void) {
 
     if (cfg_ngtp_mode) {
         auto connection = TCPServer::get_instance().get_active_connection();
-        if (connection && connection->stream.socket().is_open()) {
-            return connection->stream.socket().available() > 0;
+        if (connection && connection->stream.rdbuf()->is_open()) {
+            return connection->stream.rdbuf()->available() > 0;
         }
         else if (connection) {
             return true;
@@ -109,7 +110,7 @@ void Utils::myprintf(const char *fmt, ...) {
     va_list ap;
     if (cfg_ngtp_mode) {
         auto connection = TCPServer::get_instance().get_active_connection();
-        if (connection && connection->stream.socket().is_open()) {
+        if (connection && connection->stream.rdbuf()->is_open()) {
             va_start(ap, fmt);
             vsnprintf(buffer, 1024, fmt, ap);
             va_end(ap);
@@ -141,7 +142,7 @@ static void gtp_network_printf(std::string prefix, const char *fmt, va_list ap) 
     char buffer[1024];
     vsnprintf(buffer, 1024, fmt, ap);
     auto connection = TCPServer::get_instance().get_active_connection();
-    if (connection && connection->stream.socket().is_open()) {
+    if (connection && connection->stream.rdbuf()->is_open()) {
         printf("%s%s\n", prefix.c_str(), buffer);
         connection->stream << prefix;
         connection->stream << buffer;

@@ -19,16 +19,13 @@
 #include "TCPServer.h"
 #include "config.h"
 
-ClientConnection::ClientConnection(tcp::socket &&_socket) : stream{std::move(_socket)} {
-    stream.expires_after(std::chrono::seconds(cfg_ngtp_timeout));
-}
-
-TCPServer::TCPServer(const ushort port) :
+TCPServer::TCPServer(const unsigned short port) :
     m_io_service{},
     m_acceptor(m_io_service, tcp::endpoint(tcp::v4(), port)) {}
 
 std::shared_ptr<ClientConnection> TCPServer::accept_connection() {
-    auto connection = std::make_shared<ClientConnection>( m_acceptor.accept() );
+    auto connection = std::make_shared<ClientConnection>();
+    m_acceptor.accept(*(connection->stream.rdbuf()));
     m_active_connection = connection;
     return connection;
 }
