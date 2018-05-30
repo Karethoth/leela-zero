@@ -23,6 +23,7 @@
 
 #include <mutex>
 #include <cstdarg>
+#include <chrono>
 #include <cstdio>
 #include <boost/asio.hpp>
 
@@ -40,7 +41,11 @@ void Utils::bump_connection_expiration(const unsigned int seconds) {
     if (cfg_ngtp_mode) {
         auto connection = TCPServer::get_instance().get_active_connection();
         if (connection && connection->stream.rdbuf()->is_open()) {
+#ifdef _WIN32
             connection->stream.rdbuf()->expires_from_now(boost::posix_time::seconds(seconds));
+#else
+            connection->stream.rdbuf()->expires_from_now(std::chrono::seconds(seconds));
+#endif
         }
     }
 }
