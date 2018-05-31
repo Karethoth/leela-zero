@@ -116,6 +116,7 @@ void Utils::myprintf(const char *fmt, ...) {
     if (cfg_ngtp_mode) {
         auto connection = TCPServer::get_instance().get_active_connection();
         if (connection && connection->stream.rdbuf()->is_open()) {
+            std::lock_guard<std::mutex> lock(IOmutex);
             va_start(ap, fmt);
             vsnprintf(buffer, 1024, fmt, ap);
             va_end(ap);
@@ -144,11 +145,11 @@ static void gtp_fprintf(FILE* file, const std::string& prefix,
 }
 
 static void gtp_network_printf(std::string prefix, const char *fmt, va_list ap) {
-    char buffer[1024];
-    vsnprintf(buffer, 1024, fmt, ap);
+    char buffer[2048];
+    vsnprintf(buffer, 2048, fmt, ap);
     auto connection = TCPServer::get_instance().get_active_connection();
     if (connection && connection->stream.rdbuf()->is_open()) {
-        printf("%s %s\n", prefix.c_str(), buffer);
+        printf("%s %s\n\n", prefix.c_str(), buffer);
         connection->stream << prefix;
         connection->stream << " ";
         connection->stream << buffer;
@@ -164,6 +165,7 @@ static void gtp_base_printf(int id, std::string prefix,
     }
 
     if (cfg_ngtp_mode) {
+        std::lock_guard<std::mutex> lock(IOmutex);
         gtp_network_printf(prefix, fmt, ap);
     }
     else {
