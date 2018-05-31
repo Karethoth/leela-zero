@@ -148,8 +148,9 @@ static void gtp_network_printf(std::string prefix, const char *fmt, va_list ap) 
     vsnprintf(buffer, 1024, fmt, ap);
     auto connection = TCPServer::get_instance().get_active_connection();
     if (connection && connection->stream.rdbuf()->is_open()) {
-        printf("%s%s\n", prefix.c_str(), buffer);
+        printf("%s %s\n", prefix.c_str(), buffer);
         connection->stream << prefix;
+        connection->stream << " ";
         connection->stream << buffer;
         connection->stream << "\n\n";
         Utils::bump_connection_expiration(cfg_ngtp_timeout);
