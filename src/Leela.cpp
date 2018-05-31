@@ -70,6 +70,8 @@ static void parse_commandline(int argc, char *argv[]) {
                         "Resign when winrate is less than x%.\n"
                         "-1 uses 10% but scales for handicap.")
         ("weights,w", po::value<std::string>(), "File with network weights.")
+        ("weightsdir,W", po::value<std::string>()->default_value(cfg_weightsdir),
+                         "Path to directory with network weights.")
         ("logfile,l", po::value<std::string>(), "File to log input/output to.")
         ("quiet,q", "Disable all diagnostic output.")
         ("timemanage", po::value<std::string>()->default_value("auto"),
@@ -200,6 +202,10 @@ static void parse_commandline(int argc, char *argv[]) {
     } else {
         printf("A network weights file is required to use the program.\n");
         exit(EXIT_FAILURE);
+    }
+
+    if (vm.count("weightsdir")) {
+        cfg_weightsdir = vm["weightsdir"].as<std::string>();
     }
 
     if (vm.count("gtp")) {

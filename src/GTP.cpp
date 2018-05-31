@@ -69,6 +69,7 @@ float cfg_puct;
 float cfg_softmax_temp;
 float cfg_fpu_reduction;
 std::string cfg_weightsfile;
+std::string cfg_weightsdir;
 std::string cfg_logfile;
 FILE* cfg_logfile_handle;
 bool cfg_quiet;
@@ -92,6 +93,7 @@ void GTP::setup_default_parameters() {
     cfg_max_visits = UCTSearch::UNLIMITED_PLAYOUTS;
     cfg_timemanage = TimeManagement::AUTO;
     cfg_lagbuffer_cs = 100;
+    cfg_weightsdir = "weights";
 #ifdef USE_OPENCL
     cfg_gpus = { };
     cfg_sgemm_exhaustive = false;
@@ -156,6 +158,7 @@ const std::string GTP::s_commands[] = {
     "heatmap",
     "ponder",
     "noponder",
+    "list_weights",
     ""
 };
 
@@ -830,6 +833,44 @@ bool GTP::execute(GameState & game, std::string xinput) {
         cfg_allow_pondering = false;
         search->stop_pondering();
 
+        return true;
+    } else if (command.find("list_weights") == 0) {
+        myprintf("Weights:\n");
+        const auto weight_dir_contents = Utils::get_directory_contents(cfg_weightsdir);
+
+        std::string outtmp{};
+
+        bool is_first = true;
+        for (auto path : weight_dir_contents) {
+            const auto filename_start = path.find_last_of("/") + 1;
+            const auto filename = path.substr(filename_start);
+            const auto extension_start = filename.find(".gz");
+
+            if (extension_start != std::string::npos) {
+                outtmp = outtmp + (is_first ? "" : "\n") + filename.substr(0, extension_start);
+                is_first = false;
+            }
+        }
+        gtp_printf(id, outtmp.c_str());
+
+        return true;
+    } else if (command.find("use_weights") == 0) {
+        std::istringstream cmdstream(command);
+        std::string tmp;
+
+        cmdstream >> tmp;     /* remove change_weights */
+        cmdstream >> tmp;
+
+        std::string weightsfile = cfg_weightsdir;
+        weightsfile.append( "/" );
+        weightsfile.append( tmp );
+        weightsfile.append( ".gz" );
+        cfg_weightsfile = weightsfile;
+        Network::initialize();
+        auto komi = 7.5f;
+        game.init_game(BOARD_SIZE, komi);
+
+        gtp_printf(id,"");
         return true;
     }
 

@@ -73,7 +73,10 @@ private:
 
 class OpenCL_Network {
 public:
-    OpenCL_Network(OpenCL & opencl) : m_opencl(opencl) {}
+    OpenCL_Network( OpenCL & opencl ) : m_opencl( opencl )
+    {
+        printf( "Constructing OpenCL_Network\n" );
+    }
     OpenCL & getOpenCL() {
         return m_opencl;
     }
@@ -84,7 +87,9 @@ public:
                        const std::vector<float>& weights,
                        const std::vector<float>& means,
                        const std::vector<float>& variances) {
+        m_layers.clear();
         size_t layer = get_layer_count();
+
         push_weights(layer, weights);
         push_weights(layer, means);
         push_weights(layer, variances);
@@ -197,6 +202,7 @@ private:
     size_t m_wavefront_size{0};
     size_t m_max_workgroup_size{0};
     std::vector<size_t> m_max_workgroup_dims;
+    bool m_initialized = false;
     bool m_init_ok{false};
 };
 

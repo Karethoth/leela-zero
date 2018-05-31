@@ -32,6 +32,9 @@ public:
     std::vector<std::unique_ptr<OpenCL_Network>> & get_networks() {
         return m_networks;
     }
+    void clear_networks() {
+        m_networks.clear();
+    }
     void forward(const std::vector<net_t>& input,
                  std::vector<net_t>& output_pol,
                  std::vector<net_t>& output_val);

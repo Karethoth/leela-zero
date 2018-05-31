@@ -417,6 +417,7 @@ thread_local ThreadData opencl_thread_data;
 void OpenCL::ensure_thread_initialized() {
     if (!opencl_thread_data.m_is_initialized) {
         // Make kernels
+        printf( "Making kernels\n" );
         opencl_thread_data.m_convolve1_kernel =
             cl::Kernel(m_program, "convolve1");
         opencl_thread_data.m_merge_kernel =
@@ -441,6 +442,7 @@ void OpenCL_Network::add_weights(size_t layer,
     if (layer >= m_layers.size()) {
         m_layers.push_back(Layer());
     }
+    printf( "Layers: %d\n", m_layers.size() );
 
     auto converted_weights = std::vector<net_t>();
     for (auto i = size_t{0}; i < size; i++) {
@@ -944,6 +946,12 @@ std::vector<size_t> OpenCL::get_sgemm_tuners(void) {
 
 void OpenCL::initialize(const int channels, const std::vector<int> & gpus,
                         bool silent) {
+    if (m_initialized) {
+        return;
+    }
+    else {
+        m_initialized = true;
+    }
     std::vector<cl::Platform> platforms;
     try {
         cl::Platform::get(&platforms);

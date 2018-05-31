@@ -403,6 +403,7 @@ void Network::initialize() {
 #ifdef USE_OPENCL
     myprintf("Initializing OpenCL.\n");
     opencl.initialize(channels);
+    opencl.clear_networks();
 
     for (const auto & opencl_net : opencl.get_networks()) {
         const auto tuners = opencl_net->getOpenCL().get_sgemm_tuners();

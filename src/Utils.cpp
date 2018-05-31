@@ -24,8 +24,11 @@
 #include <mutex>
 #include <cstdarg>
 #include <chrono>
+#include <vector>
 #include <cstdio>
 #include <boost/asio.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/range/iterator_range.hpp>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -206,4 +209,18 @@ size_t Utils::ceilMultiple(size_t a, size_t b) {
 
     auto ret = a + (b - a % b);
     return ret;
+}
+
+std::vector<std::string> Utils::get_directory_contents( std::string dir_path ) {
+    boost::filesystem::path path( dir_path );
+    if (boost::filesystem::is_directory(path)) {
+        std::vector<std::string> files;
+        for(auto& entry : boost::make_iterator_range( boost::filesystem::directory_iterator(path), {})) {
+            const auto weight_file_path = entry.path().generic_string();
+            files.push_back(weight_file_path.c_str());
+        }
+        return files;
+    }
+
+    return {};
 }

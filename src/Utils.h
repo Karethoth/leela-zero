@@ -24,6 +24,8 @@
 #include <atomic>
 #include <limits>
 #include <string>
+#include <vector>
+#include <string>
 
 #include "ThreadPool.h"
 
@@ -53,6 +55,7 @@ namespace Utils {
     }
 
     size_t ceilMultiple(size_t a, size_t b);
+    std::vector<std::string> get_directory_contents( std::string dir_path );
 }
 
 #endif
